@@ -34,18 +34,20 @@ int main(int argc, char* argv[]){
     }
     else
     {
+        int condition;
+        klee_make_symbolic(&condition, sizeof(int), "condition");
         struct Type2* var_struct = (struct Type2*) malloc(sizeof(struct Type2));
         var_struct->status = 0;
         printf ("..........exploiting path is taken. \n");
         *gvar.obj2->ptr = 0x1234; // But we modify it (e.g., to badFunc)
 
-        if (res){
+        if (condition){
             global_b = var_struct->status + 100;
         }
 
         global_a = 100;
 
-        if (res){
+        if (condition + 100){
             handler = global_a - 100;
         }else {
             handler = global_b - 100;
