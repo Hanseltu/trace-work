@@ -14,8 +14,8 @@ target triple = "x86_64-unknown-linux-gnu"
 @handler = dso_local global i32 (i32*)* null, align 8
 @.str.3 = private unnamed_addr constant [26 x i8] c"crashing path is taken. \0A\00", align 1
 @.str.4 = private unnamed_addr constant [38 x i8] c"..........exploiting path is taken. \0A\00", align 1
-@global_a = dso_local global i64 0, align 8
 @global_b = dso_local global i64 0, align 8
+@global_a = dso_local global i64 0, align 8
 @handler1 = dso_local global i32 (i32)* null, align 8
 @handler2 = dso_local global i32 (i32)* null, align 8
 
@@ -65,47 +65,63 @@ if.then:                                          ; preds = %entry
   %ptr = getelementptr inbounds %struct.Type2, %struct.Type2* %6, i32 0, i32 1
   %7 = load i32*, i32** %ptr, align 8
   %8 = load i32, i32* %7, align 4
-  br label %if.end11
+  br label %if.end17
 
 if.else:                                          ; preds = %entry
-  %call5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([38 x i8], [38 x i8]* @.str.4, i64 0, i64 0))
-  %9 = load %struct.Type2*, %struct.Type2** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 1), align 8
-  %ptr6 = getelementptr inbounds %struct.Type2, %struct.Type2* %9, i32 0, i32 1
-  %10 = load i32*, i32** %ptr6, align 8
-  store i32 4660, i32* %10, align 4
+  %call5 = call noalias align 16 i8* @malloc(i64 16) #4
+  %9 = bitcast i8* %call5 to %struct.Type2*
+  %status6 = getelementptr inbounds %struct.Type2, %struct.Type2* %9, i32 0, i32 0
+  store i32 0, i32* %status6, align 8
+  %call7 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([38 x i8], [38 x i8]* @.str.4, i64 0, i64 0))
+  %10 = load %struct.Type2*, %struct.Type2** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 1), align 8
+  %ptr8 = getelementptr inbounds %struct.Type2, %struct.Type2* %10, i32 0, i32 1
+  %11 = load i32*, i32** %ptr8, align 8
+  store i32 4660, i32* %11, align 4
+  %tobool9 = icmp ne i32 undef, 0
+  br i1 %tobool9, label %if.then10, label %if.end
+
+if.then10:                                        ; preds = %if.else
+  %status11 = getelementptr inbounds %struct.Type2, %struct.Type2* %9, i32 0, i32 0
+  %12 = load i32, i32* %status11, align 8
+  %add = add nsw i32 %12, 100
+  %conv = sext i32 %add to i64
+  store i64 %conv, i64* @global_b, align 8
+  br label %if.end
+
+if.end:                                           ; preds = %if.then10, %if.else
   store i64 100, i64* @global_a, align 8
-  %tobool7 = icmp ne i32 undef, 0
-  br i1 %tobool7, label %if.then8, label %if.else9
+  %tobool12 = icmp ne i32 undef, 0
+  br i1 %tobool12, label %if.then13, label %if.else14
 
-if.then8:                                         ; preds = %if.else
-  %11 = load i64, i64* @global_a, align 8
-  %sub = sub nsw i64 %11, 100
-  %12 = inttoptr i64 %sub to i32 (i32*)*
-  store i32 (i32*)* %12, i32 (i32*)** @handler, align 8
-  br label %if.end
-
-if.else9:                                         ; preds = %if.else
-  %13 = load i64, i64* @global_b, align 8
-  %sub10 = sub nsw i64 %13, 100
-  %14 = inttoptr i64 %sub10 to i32 (i32*)*
+if.then13:                                        ; preds = %if.end
+  %13 = load i64, i64* @global_a, align 8
+  %sub = sub nsw i64 %13, 100
+  %14 = inttoptr i64 %sub to i32 (i32*)*
   store i32 (i32*)* %14, i32 (i32*)** @handler, align 8
-  br label %if.end
+  br label %if.end16
 
-if.end:                                           ; preds = %if.else9, %if.then8
-  %15 = load i32 (i32*)*, i32 (i32*)** @handler, align 8
-  %16 = bitcast i32 (i32*)* %15 to i8*
-  %add.ptr = getelementptr i8, i8* %16, i64 1000
-  %17 = bitcast i8* %add.ptr to i32 (i32*)*
-  store i32 (i32*)* %17, i32 (i32*)** @handler, align 8
-  br label %if.end11
+if.else14:                                        ; preds = %if.end
+  %15 = load i64, i64* @global_b, align 8
+  %sub15 = sub nsw i64 %15, 100
+  %16 = inttoptr i64 %sub15 to i32 (i32*)*
+  store i32 (i32*)* %16, i32 (i32*)** @handler, align 8
+  br label %if.end16
 
-if.end11:                                         ; preds = %if.end, %if.then
-  %res.0 = phi i32 [ %8, %if.then ], [ undef, %if.end ]
-  %18 = load i32 (i32*)*, i32 (i32*)** @handler, align 8
-  %19 = load %struct.Type2*, %struct.Type2** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 1), align 8
-  %ptr12 = getelementptr inbounds %struct.Type2, %struct.Type2* %19, i32 0, i32 1
-  %20 = load i32*, i32** %ptr12, align 8
-  %call13 = call i32 %18(i32* %20)
+if.end16:                                         ; preds = %if.else14, %if.then13
+  %17 = load i32 (i32*)*, i32 (i32*)** @handler, align 8
+  %18 = bitcast i32 (i32*)* %17 to i8*
+  %add.ptr = getelementptr i8, i8* %18, i64 1000
+  %19 = bitcast i8* %add.ptr to i32 (i32*)*
+  store i32 (i32*)* %19, i32 (i32*)** @handler, align 8
+  br label %if.end17
+
+if.end17:                                         ; preds = %if.end16, %if.then
+  %res.0 = phi i32 [ %8, %if.then ], [ undef, %if.end16 ]
+  %20 = load i32 (i32*)*, i32 (i32*)** @handler, align 8
+  %21 = load %struct.Type2*, %struct.Type2** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 1), align 8
+  %ptr18 = getelementptr inbounds %struct.Type2, %struct.Type2* %21, i32 0, i32 1
+  %22 = load i32*, i32** %ptr18, align 8
+  %call19 = call i32 %20(i32* %22)
   ret i32 %res.0
 }
 

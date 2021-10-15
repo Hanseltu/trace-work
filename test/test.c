@@ -34,8 +34,14 @@ int main(int argc, char* argv[]){
     }
     else
     {
+        struct Type2* var_struct = (struct Type2*) malloc(sizeof(struct Type2));
+        var_struct->status = 0;
         printf ("..........exploiting path is taken. \n");
         *gvar.obj2->ptr = 0x1234; // But we modify it (e.g., to badFunc)
+
+        if (res){
+            global_b = var_struct->status + 100;
+        }
 
         global_a = 100;
 
