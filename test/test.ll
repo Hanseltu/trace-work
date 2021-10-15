@@ -15,6 +15,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @.str.3 = private unnamed_addr constant [26 x i8] c"crashing path is taken. \0A\00", align 1
 @.str.4 = private unnamed_addr constant [38 x i8] c"..........exploiting path is taken. \0A\00", align 1
 @global_a = dso_local global i64 0, align 8
+@global_b = dso_local global i64 0, align 8
 @handler1 = dso_local global i32 (i32)* null, align 8
 @handler2 = dso_local global i32 (i32)* null, align 8
 
@@ -38,7 +39,6 @@ entry:
 define dso_local i32 @main(i32 %argc, i8** %argv) #0 {
 entry:
   %temp = alloca [16 x i8], align 16
-  %array = alloca [10000 x i64], align 16
   %call = call noalias align 16 i8* @malloc(i64 8) #4
   %0 = bitcast i8* %call to %struct.Type1*
   store %struct.Type1* %0, %struct.Type1** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 0), align 8
@@ -65,56 +65,47 @@ if.then:                                          ; preds = %entry
   %ptr = getelementptr inbounds %struct.Type2, %struct.Type2* %6, i32 0, i32 1
   %7 = load i32*, i32** %ptr, align 8
   %8 = load i32, i32* %7, align 4
-  br label %if.end
+  br label %if.end11
 
 if.else:                                          ; preds = %entry
-  %call5 = call noalias align 16 i8* @malloc(i64 8) #4
-  %9 = bitcast i8* %call5 to i64*
-  %call6 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([38 x i8], [38 x i8]* @.str.4, i64 0, i64 0))
-  %10 = load %struct.Type2*, %struct.Type2** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 1), align 8
-  %ptr7 = getelementptr inbounds %struct.Type2, %struct.Type2* %10, i32 0, i32 1
-  %11 = load i32*, i32** %ptr7, align 8
-  store i32 4660, i32* %11, align 4
-  %12 = load i64, i64* @global_a, align 8
-  %sub = sub nsw i64 %12, 100
-  %13 = inttoptr i64 %sub to i64*
-  %14 = load i64, i64* %13, align 8
-  %sub8 = sub nsw i64 %14, 100
-  %add = add nsw i64 %sub8, 1000
-  %15 = inttoptr i64 %add to i32 (i32*)*
-  store i32 (i32*)* %15, i32 (i32*)** @handler, align 8
+  %call5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([38 x i8], [38 x i8]* @.str.4, i64 0, i64 0))
+  %9 = load %struct.Type2*, %struct.Type2** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 1), align 8
+  %ptr6 = getelementptr inbounds %struct.Type2, %struct.Type2* %9, i32 0, i32 1
+  %10 = load i32*, i32** %ptr6, align 8
+  store i32 4660, i32* %10, align 4
+  store i64 100, i64* @global_a, align 8
+  %tobool7 = icmp ne i32 undef, 0
+  br i1 %tobool7, label %if.then8, label %if.else9
+
+if.then8:                                         ; preds = %if.else
+  %11 = load i64, i64* @global_a, align 8
+  %sub = sub nsw i64 %11, 100
+  %12 = inttoptr i64 %sub to i32 (i32*)*
+  store i32 (i32*)* %12, i32 (i32*)** @handler, align 8
   br label %if.end
 
-if.end:                                           ; preds = %if.else, %if.then
-  %res.0 = phi i32 [ %8, %if.then ], [ undef, %if.else ]
-  %16 = load i64, i64* @global_a, align 8
-  %17 = inttoptr i64 %16 to i32 (i32*)*
+if.else9:                                         ; preds = %if.else
+  %13 = load i64, i64* @global_b, align 8
+  %sub10 = sub nsw i64 %13, 100
+  %14 = inttoptr i64 %sub10 to i32 (i32*)*
+  store i32 (i32*)* %14, i32 (i32*)** @handler, align 8
+  br label %if.end
+
+if.end:                                           ; preds = %if.else9, %if.then8
+  %15 = load i32 (i32*)*, i32 (i32*)** @handler, align 8
+  %16 = bitcast i32 (i32*)* %15 to i8*
+  %add.ptr = getelementptr i8, i8* %16, i64 1000
+  %17 = bitcast i8* %add.ptr to i32 (i32*)*
   store i32 (i32*)* %17, i32 (i32*)** @handler, align 8
-  br label %for.cond
+  br label %if.end11
 
-for.cond:                                         ; preds = %for.inc, %if.end
-  %i.0 = phi i32 [ 0, %if.end ], [ %inc, %for.inc ]
-  %cmp = icmp slt i32 %i.0, 10000
-  br i1 %cmp, label %for.body, label %for.end
-
-for.body:                                         ; preds = %for.cond
-  %idxprom = sext i32 %i.0 to i64
-  %arrayidx = getelementptr inbounds [10000 x i64], [10000 x i64]* %array, i64 0, i64 %idxprom
-  %18 = load i64, i64* %arrayidx, align 8
-  %19 = inttoptr i64 %18 to i32 (i32*)*
-  store i32 (i32*)* %19, i32 (i32*)** @handler, align 8
-  br label %for.inc
-
-for.inc:                                          ; preds = %for.body
-  %inc = add nsw i32 %i.0, 1
-  br label %for.cond, !llvm.loop !4
-
-for.end:                                          ; preds = %for.cond
-  %20 = load i32 (i32*)*, i32 (i32*)** @handler, align 8
-  %21 = load %struct.Type2*, %struct.Type2** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 1), align 8
-  %ptr9 = getelementptr inbounds %struct.Type2, %struct.Type2* %21, i32 0, i32 1
-  %22 = load i32*, i32** %ptr9, align 8
-  %call10 = call i32 %20(i32* %22)
+if.end11:                                         ; preds = %if.end, %if.then
+  %res.0 = phi i32 [ %8, %if.then ], [ undef, %if.end ]
+  %18 = load i32 (i32*)*, i32 (i32*)** @handler, align 8
+  %19 = load %struct.Type2*, %struct.Type2** getelementptr inbounds (%struct.anon, %struct.anon* @gvar, i32 0, i32 1), align 8
+  %ptr12 = getelementptr inbounds %struct.Type2, %struct.Type2* %19, i32 0, i32 1
+  %20 = load i32*, i32** %ptr12, align 8
+  %call13 = call i32 %18(i32* %20)
   ret i32 %res.0
 }
 
@@ -139,5 +130,3 @@ attributes #4 = { nounwind }
 !1 = !{i32 7, !"uwtable", i32 1}
 !2 = !{i32 7, !"frame-pointer", i32 2}
 !3 = !{!"clang version 13.0.0 (https://github.com/llvm/llvm-project 35df2f6fbd1ae2e6f9313454e5446212fcbcf90a)"}
-!4 = distinct !{!4, !5}
-!5 = !{!"llvm.loop.mustprogress"}

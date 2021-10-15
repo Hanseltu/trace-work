@@ -12,7 +12,10 @@ int (*handler2)(int);
 int (*handler)(const int*);
 int goodFunc(const int* var){printf("/////This is a Good function\n");return 0;}
 int badFunc(const int* var){printf("/////This is a Evil function\n");return 0;}
+
 long global_a;
+long global_b;
+
 struct {struct Type1* obj1; struct Type2* obj2;} gvar = {};
 int main(int argc, char* argv[]){
     gvar.obj1 = (struct Type1*)malloc(sizeof(struct Type1));
@@ -31,21 +34,20 @@ int main(int argc, char* argv[]){
     }
     else
     {
-        long *b = malloc(sizeof(long));
         printf ("..........exploiting path is taken. \n");
         *gvar.obj2->ptr = 0x1234; // But we modify it (e.g., to badFunc)
-        if (1){
-            b = global_a - 100;
+
+        global_a = 100;
+
+        if (res){
+            handler = global_a - 100;
+        }else {
+            handler = global_b - 100;
         }
-        handler = *b - 100 + 1000;
+
+        handler = handler + 1000;
 
     }
-    handler = global_a;
-    long array[10000];
-    for (int i = 0; i < 10000; i++){
-        handler = array[i];
-    }
-    //handler = 100;
     handler(gvar.obj2->ptr);
     return res;
 }
